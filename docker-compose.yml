@@ -33,7 +33,7 @@ services:
       #- INSTANCE_MEMORY=512
 
   app:
-    image: catmaid/catmaid:stable
+    image: catmaid/catmaid:latest
     restart: unless-stopped
     volumes:
       - ./volumes/app/static:/home/django/static
@@ -81,6 +81,9 @@ services:
       - "8000:80"
       - "8443:443"
     restart: on-failure
+    networks:
+      - default
+      - proxy
     volumes:
       # This directory must have cert files
       - ./volumes/web/cert:/cert:ro
@@ -98,3 +101,11 @@ services:
       - CORS_OPEN=true
     depends_on:
       - app
+    
+
+networks:
+  default:
+    driver_opts:
+      com.docker.network.bridge.name: catmaid
+  proxy:
+    external: true
