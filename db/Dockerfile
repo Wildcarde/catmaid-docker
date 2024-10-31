@@ -1,4 +1,4 @@
-FROM postgis/postgis:13-3.2
+FROM postgis/postgis:17-3.5
 
 # For building and running the image, let dpkg/apt know that we install and
 # configure non-interactively.
