@@ -1,39 +1,19 @@
-version: "3.5"
-
 services:
-
   db:
-    build:
-      context: db
-      # shm_size: '2gb' # build-time
-      #
-    restart: on-failure
-    volumes:
-      - ./volumes/db/var/lib/postgresql/data:/var/lib/postgresql/data
-      - ./volumes/db/opt/import:/opt/import
-      # No time mapping is needed, we expect the database to run in UTC.
+    image: postgis/postgis:17-3.5
+    build: !reset null
+    restart: always
+    # set shared memory limit when using docker-compose
+    shm_size: 128mb
     environment:
-      - POSTGRES_USER=catmaid
-      - POSTGRES_PASSWORD=catmaid_password
-      - POSTGRES_DB=catmaid
-      # By default, 50 connections are assumed.
-      - DB_CONNECTIONS=50
-      # By default, the database is only tuned on initial startup. To force a
-      # new tuning, set DB_FORCE_TUNE=true.
-      - DB_FORCE_TUNE=false
-      # Allow database updates
-      #- DB_UPDATE=false
-      #
-      # Enable initial tuning
-      # - DB_TUNE=true
-      #
-      # By default the available memory of the host is used for tuning the
-      # database. This can be overridden by setting INSTANCE_MEMORY to a custom
-      # value in megabytes.
-      #- INSTANCE_MEMORY=512
+      POSTGRES_PASSWORD: catmaid_password
+      POSTGRES_USER: catmaid
+      POSTGRES_DB: catmaid
+    volumes:
+      - ./volumes/db/data:/var/lib/postgresql/data
 
   app:
-    image: catmaid/catmaid:stable
+    image: catmaid/catmaid:latest
     restart: unless-stopped
     volumes:
       - ./volumes/app/static:/home/django/static
@@ -81,6 +61,9 @@ services:
       - "8000:80"
       - "8443:443"
     restart: on-failure
+    networks:
+      - default
+      - proxy
     volumes:
       # This directory must have cert files
       - ./volumes/web/cert:/cert:ro
@@ -98,3 +81,11 @@ services:
       - CORS_OPEN=true
     depends_on:
       - app
+    
+
+networks:
+  default:
+    driver_opts:
+      com.docker.network.bridge.name: catmaid
+  proxy:
+    external: true
